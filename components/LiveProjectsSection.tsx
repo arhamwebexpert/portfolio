@@ -40,6 +40,22 @@ const liveProjects = [
     icon: "💬",
     floatDelay: 0.4,
   },
+  {
+    id: 3,
+    title: "Skin Progress Tracker",
+    tagline: "AI Skin Health Analysis — Baqai Hospital",
+    description:
+      "Deep learning skin analysis using CNN models trained with TensorFlow to score pores, texture, and hydration from face images. Built for and validated by Baqai Hospital dermatologists.",
+    tech: ["TensorFlow", "Python", "CNN", "Flask", "Computer Vision"],
+    liveUrl: "https://arham2001-skincareapp.hf.space/",
+    githubUrl: "https://github.com/arhamwebexpert",
+    status: "Live",
+    statusColor: "#a855f7",
+    gradient: "linear-gradient(135deg, #7c3aed 0%, #00d4ff 60%, #0a1628 100%)",
+    accent: "#7c3aed",
+    icon: "🧬",
+    floatDelay: 0.8,
+  },
 ];
 
 /* ─── Three.js floating geometry background ────────────────────────────── */
