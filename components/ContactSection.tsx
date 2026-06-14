@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import ScrollReveal, { RevealItem } from "./ScrollReveal";
+import TiltCard from "@/components/TiltCard";
 
 const contactLinks = [
   {
@@ -51,9 +53,13 @@ const contactLinks = [
   },
 ];
 
+/* Per-field focus state key */
+type FieldKey = "name" | "email" | "subject" | "message";
+
 export default function ContactSection() {
   const [form, setForm] = useState({ name: "", email: "", subject: "", message: "" });
   const [sent, setSent] = useState(false);
+  const [focusedField, setFocusedField] = useState<FieldKey | null>(null);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,18 +69,35 @@ export default function ContactSection() {
     setTimeout(() => setSent(false), 4000);
   };
 
-  const inputStyle: React.CSSProperties = {
+  /* Base input style — focus glow is applied via focusedField state */
+  const getInputStyle = (field: FieldKey): React.CSSProperties => ({
     width: "100%",
-    background: "rgba(255,255,255,0.04)",
-    border: "1px solid rgba(0,212,255,0.15)",
+    background: focusedField === field ? "rgba(0,212,255,0.05)" : "rgba(255,255,255,0.04)",
+    border: `1px solid ${focusedField === field ? "rgba(0,212,255,0.55)" : "rgba(0,212,255,0.15)"}`,
     borderRadius: 8,
     padding: "12px 16px",
     color: "#e2e8f0",
     fontSize: "0.95rem",
     outline: "none",
-    transition: "border-color 0.2s",
+    transition: "border-color 0.2s, box-shadow 0.2s, background 0.2s",
     fontFamily: "inherit",
-  };
+    boxShadow: focusedField === field ? "0 0 0 3px rgba(0,212,255,0.1), 0 0 16px rgba(0,212,255,0.08)" : "none",
+  });
+
+  const getTextareaStyle = (field: FieldKey): React.CSSProperties => ({
+    ...getInputStyle(field),
+    resize: "vertical",
+    minHeight: 130,
+  });
+
+  const getLabelStyle = (field: FieldKey): React.CSSProperties => ({
+    display: "block",
+    fontSize: "0.8rem",
+    marginBottom: 6,
+    fontWeight: 500,
+    transition: "color 0.2s",
+    color: focusedField === field ? "#00d4ff" : "#64748b",
+  });
 
   return (
     <section
@@ -86,11 +109,13 @@ export default function ContactSection() {
         overflow: "hidden",
       }}
     >
+      {/* Background ambient blobs */}
       <div
         style={{
           position: "absolute",
           inset: 0,
-          backgroundImage: "radial-gradient(circle at 30% 70%, rgba(124,58,237,0.06) 0%, transparent 50%)",
+          backgroundImage:
+            "radial-gradient(circle at 30% 70%, rgba(124,58,237,0.06) 0%, transparent 50%), radial-gradient(circle at 75% 20%, rgba(0,102,255,0.05) 0%, transparent 45%)",
           pointerEvents: "none",
         }}
       />
@@ -113,7 +138,7 @@ export default function ContactSection() {
           style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 48, alignItems: "start" }}
           className="contact-grid"
         >
-          {/* Left: contact info */}
+          {/* Left: contact info cards */}
           <ScrollReveal variant="left" delay={0.1}>
             <h3 style={{ color: "#e2e8f0", fontWeight: 700, fontSize: "1.2rem", marginBottom: 8 }}>
               Ready to collaborate?
@@ -125,45 +150,112 @@ export default function ContactSection() {
             <ScrollReveal stagger staggerDelay={0.1} style={{ display: "flex", flexDirection: "column", gap: 16 }}>
               {contactLinks.map((link) => (
                 <RevealItem key={link.label} variant="left" as="div">
-                  <a
-                    href={link.href}
-                    target={link.href.startsWith("http") ? "_blank" : undefined}
-                    rel="noreferrer"
-                    className="card-glass"
-                    style={{
-                      padding: "16px 20px",
-                      display: "flex",
-                      alignItems: "center",
-                      gap: 16,
-                      textDecoration: "none",
-                      cursor: "pointer",
-                    }}
-                  >
-                  <div
-                    style={{
-                      width: 44,
-                      height: 44,
-                      borderRadius: 10,
-                      background: `${link.color}14`,
-                      border: `1px solid ${link.color}30`,
-                      display: "flex",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: link.color,
-                      flexShrink: 0,
-                    }}
-                  >
-                    {link.icon}
-                  </div>
-                  <div>
-                    <div style={{ color: "#475569", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 2 }}>
-                      {link.label}
-                    </div>
-                    <div style={{ color: link.color, fontWeight: 600, fontSize: "0.9rem" }}>
-                      {link.value}
-                    </div>
-                  </div>
-                  </a>
+                  <TiltCard max={4} scale={1.03} glare={false} style={{ borderRadius: 12 }}>
+                    <motion.a
+                      href={link.href}
+                      target={link.href.startsWith("http") ? "_blank" : undefined}
+                      rel="noreferrer"
+                      className="card-glass"
+                      style={{
+                        padding: "16px 20px",
+                        display: "flex",
+                        alignItems: "center",
+                        gap: 16,
+                        textDecoration: "none",
+                        cursor: "pointer",
+                        borderRadius: 12,
+                        position: "relative",
+                        overflow: "hidden",
+                        transition: "border-color 0.25s, box-shadow 0.25s",
+                      }}
+                      whileHover="hovered"
+                      initial="rest"
+                      animate="rest"
+                    >
+                      {/* Hover tinted backdrop */}
+                      <motion.span
+                        aria-hidden
+                        variants={{
+                          rest: { opacity: 0 },
+                          hovered: { opacity: 1 },
+                        }}
+                        transition={{ duration: 0.25 }}
+                        style={{
+                          position: "absolute",
+                          inset: 0,
+                          background: `linear-gradient(135deg, ${link.color}0a 0%, transparent 70%)`,
+                          borderRadius: 12,
+                          pointerEvents: "none",
+                        }}
+                      />
+
+                      {/* Icon container */}
+                      <motion.div
+                        variants={{
+                          rest: { scale: 1, rotate: 0, borderColor: `${link.color}30`, background: `${link.color}14` },
+                          hovered: { scale: 1.12, rotate: -8, borderColor: `${link.color}70`, background: `${link.color}22` },
+                        }}
+                        transition={{ type: "spring", stiffness: 380, damping: 22 }}
+                        style={{
+                          width: 44,
+                          height: 44,
+                          borderRadius: 10,
+                          border: `1px solid ${link.color}30`,
+                          background: `${link.color}14`,
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          color: link.color,
+                          flexShrink: 0,
+                        }}
+                      >
+                        {link.icon}
+                      </motion.div>
+
+                      <div style={{ minWidth: 0, flex: 1 }}>
+                        <div style={{ color: "#475569", fontSize: "0.75rem", textTransform: "uppercase", letterSpacing: "1px", marginBottom: 2 }}>
+                          {link.label}
+                        </div>
+                        <motion.div
+                          variants={{
+                            rest: { color: link.color, x: 0 },
+                            hovered: { color: link.color, x: 4 },
+                          }}
+                          transition={{ type: "spring", stiffness: 300, damping: 24 }}
+                          style={{
+                            fontWeight: 600,
+                            fontSize: "0.9rem",
+                            overflow: "hidden",
+                            textOverflow: "ellipsis",
+                            whiteSpace: "nowrap",
+                            color: link.color,
+                          }}
+                        >
+                          {link.value}
+                        </motion.div>
+                      </div>
+
+                      {/* Arrow chevron */}
+                      <motion.svg
+                        variants={{
+                          rest: { opacity: 0, x: -6 },
+                          hovered: { opacity: 1, x: 0 },
+                        }}
+                        transition={{ duration: 0.2 }}
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke={link.color}
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        style={{ flexShrink: 0 }}
+                      >
+                        <polyline points="9 18 15 12 9 6" />
+                      </motion.svg>
+                    </motion.a>
+                  </TiltCard>
                 </RevealItem>
               ))}
             </ScrollReveal>
@@ -171,85 +263,135 @@ export default function ContactSection() {
 
           {/* Right: contact form */}
           <ScrollReveal variant="right" delay={0.2}>
-            <div className="card-glass" style={{ padding: "32px 28px" }}>
-            <h3 style={{ color: "#e2e8f0", fontWeight: 700, fontSize: "1.1rem", marginBottom: 24 }}>
-              Send a Message
-            </h3>
+            <motion.div
+              className="card-glass hover-lift"
+              style={{ padding: "32px 28px", borderRadius: 16, position: "relative" }}
+              whileHover={{ boxShadow: "0 8px 40px rgba(0,212,255,0.08), 0 2px 12px rgba(0,0,0,0.4)" }}
+              transition={{ duration: 0.3 }}
+            >
+              <h3 style={{ color: "#e2e8f0", fontWeight: 700, fontSize: "1.1rem", marginBottom: 24 }}>
+                Send a Message
+              </h3>
 
-            <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
-              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+              <form onSubmit={handleSubmit} style={{ display: "flex", flexDirection: "column", gap: 18 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 }}>
+                  <div>
+                    <label style={getLabelStyle("name")}>Your Name</label>
+                    <input
+                      style={getInputStyle("name")}
+                      type="text"
+                      placeholder="John Doe"
+                      required
+                      value={form.name}
+                      onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
+                      onFocus={() => setFocusedField("name")}
+                      onBlur={() => setFocusedField(null)}
+                    />
+                  </div>
+                  <div>
+                    <label style={getLabelStyle("email")}>Email Address</label>
+                    <input
+                      style={getInputStyle("email")}
+                      type="email"
+                      placeholder="you@example.com"
+                      required
+                      value={form.email}
+                      onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                      onFocus={() => setFocusedField("email")}
+                      onBlur={() => setFocusedField(null)}
+                    />
+                  </div>
+                </div>
+
                 <div>
-                  <label style={{ display: "block", color: "#64748b", fontSize: "0.8rem", marginBottom: 6, fontWeight: 500 }}>
-                    Your Name
-                  </label>
+                  <label style={getLabelStyle("subject")}>Subject</label>
                   <input
-                    style={inputStyle}
+                    style={getInputStyle("subject")}
                     type="text"
-                    placeholder="John Doe"
-                    required
-                    value={form.name}
-                    onChange={(e) => setForm((f) => ({ ...f, name: e.target.value }))}
-                    onFocus={(e) => ((e.target as HTMLElement).style.borderColor = "rgba(0,212,255,0.5)")}
-                    onBlur={(e) => ((e.target as HTMLElement).style.borderColor = "rgba(0,212,255,0.15)")}
+                    placeholder="Project Inquiry / Job Opportunity"
+                    value={form.subject}
+                    onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
+                    onFocus={() => setFocusedField("subject")}
+                    onBlur={() => setFocusedField(null)}
                   />
                 </div>
+
                 <div>
-                  <label style={{ display: "block", color: "#64748b", fontSize: "0.8rem", marginBottom: 6, fontWeight: 500 }}>
-                    Email Address
-                  </label>
-                  <input
-                    style={inputStyle}
-                    type="email"
-                    placeholder="you@example.com"
+                  <label style={getLabelStyle("message")}>Message</label>
+                  <textarea
+                    style={getTextareaStyle("message")}
+                    placeholder="Tell me about your project or opportunity..."
                     required
-                    value={form.email}
-                    onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
-                    onFocus={(e) => ((e.target as HTMLElement).style.borderColor = "rgba(0,212,255,0.5)")}
-                    onBlur={(e) => ((e.target as HTMLElement).style.borderColor = "rgba(0,212,255,0.15)")}
+                    rows={5}
+                    value={form.message}
+                    onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
+                    onFocus={() => setFocusedField("message")}
+                    onBlur={() => setFocusedField(null)}
                   />
                 </div>
-              </div>
 
-              <div>
-                <label style={{ display: "block", color: "#64748b", fontSize: "0.8rem", marginBottom: 6, fontWeight: 500 }}>
-                  Subject
-                </label>
-                <input
-                  style={inputStyle}
-                  type="text"
-                  placeholder="Project Inquiry / Job Opportunity"
-                  value={form.subject}
-                  onChange={(e) => setForm((f) => ({ ...f, subject: e.target.value }))}
-                  onFocus={(e) => ((e.target as HTMLElement).style.borderColor = "rgba(0,212,255,0.5)")}
-                  onBlur={(e) => ((e.target as HTMLElement).style.borderColor = "rgba(0,212,255,0.15)")}
-                />
-              </div>
-
-              <div>
-                <label style={{ display: "block", color: "#64748b", fontSize: "0.8rem", marginBottom: 6, fontWeight: 500 }}>
-                  Message
-                </label>
-                <textarea
-                  style={{ ...inputStyle, resize: "vertical", minHeight: 130 }}
-                  placeholder="Tell me about your project or opportunity..."
-                  required
-                  rows={5}
-                  value={form.message}
-                  onChange={(e) => setForm((f) => ({ ...f, message: e.target.value }))}
-                  onFocus={(e) => ((e.target as HTMLElement).style.borderColor = "rgba(0,212,255,0.5)")}
-                  onBlur={(e) => ((e.target as HTMLElement).style.borderColor = "rgba(0,212,255,0.15)")}
-                />
-              </div>
-
-              <button
-                type="submit"
-                className="btn-primary"
-                style={{ justifyContent: "center", opacity: sent ? 0.8 : 1 }}
-              >
-                {sent ? "✓ Opening mail client..." : "Send Message →"}
-              </button>
-            </form>
-            </div>
+                {/* Submit button with AnimatePresence success swap */}
+                <div style={{ position: "relative", overflow: "hidden" }}>
+                  <AnimatePresence mode="wait" initial={false}>
+                    {sent ? (
+                      <motion.button
+                        key="sent"
+                        type="button"
+                        className="btn-primary"
+                        disabled
+                        initial={{ opacity: 0, y: 14, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -14, scale: 0.97 }}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                        style={{
+                          justifyContent: "center",
+                          width: "100%",
+                          background: "linear-gradient(135deg, #059669 0%, #047857 100%)",
+                          borderColor: "rgba(5,150,105,0.4)",
+                          cursor: "default",
+                        }}
+                      >
+                        <motion.span
+                          initial={{ rotate: -90, scale: 0.5 }}
+                          animate={{ rotate: 0, scale: 1 }}
+                          transition={{ type: "spring", stiffness: 400, damping: 18, delay: 0.1 }}
+                          style={{ display: "inline-block", marginRight: 8 }}
+                        >
+                          ✓
+                        </motion.span>
+                        Opening mail client...
+                      </motion.button>
+                    ) : (
+                      <motion.button
+                        key="idle"
+                        type="submit"
+                        className="btn-primary"
+                        initial={{ opacity: 0, y: 14, scale: 0.97 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -14, scale: 0.97 }}
+                        transition={{ duration: 0.28, ease: [0.22, 1, 0.36, 1] }}
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.97 }}
+                        style={{ justifyContent: "center", width: "100%" }}
+                      >
+                        Send Message
+                        <motion.span
+                          style={{ display: "inline-block", marginLeft: 8 }}
+                          variants={{
+                            rest: { x: 0 },
+                            hovered: { x: 4 },
+                          }}
+                          initial="rest"
+                          whileHover="hovered"
+                        >
+                          →
+                        </motion.span>
+                      </motion.button>
+                    )}
+                  </AnimatePresence>
+                </div>
+              </form>
+            </motion.div>
           </ScrollReveal>
         </div>
       </div>
@@ -277,17 +419,17 @@ export default function ContactSection() {
             { href: "https://www.linkedin.com/in/arham-mehmood-565667247", label: "LinkedIn" },
             { href: "mailto:arhammehmood122@gmail.com", label: "Email" },
           ].map((l) => (
-            <a
+            <motion.a
               key={l.label}
               href={l.href}
               target={l.href.startsWith("http") ? "_blank" : undefined}
               rel="noreferrer"
-              style={{ color: "#334155", fontSize: "0.82rem", textDecoration: "none", transition: "color 0.2s" }}
-              onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#00d4ff")}
-              onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#334155")}
+              style={{ color: "#334155", fontSize: "0.82rem", textDecoration: "none" }}
+              whileHover={{ color: "#00d4ff", y: -2 }}
+              transition={{ duration: 0.18 }}
             >
               {l.label}
-            </a>
+            </motion.a>
           ))}
         </div>
       </div>

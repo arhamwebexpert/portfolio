@@ -99,19 +99,44 @@ export default function Navbar() {
           }}
           className="hidden-mobile"
         >
-          {links.map((link) => (
-            <a
-              key={link.href}
-              href={link.href}
-              onClick={(e) => { e.preventDefault(); handleNav(link.href); }}
-              className="nav-link"
-              style={{
-                color: active === link.href.slice(1) ? "#00d4ff" : undefined,
-              }}
-            >
-              {link.label}
-            </a>
-          ))}
+          {links.map((link) => {
+            const isActive = active === link.href.slice(1);
+            return (
+              <a
+                key={link.href}
+                href={link.href}
+                onClick={(e) => { e.preventDefault(); handleNav(link.href); }}
+                style={{
+                  position: "relative",
+                  color: isActive ? "#00d4ff" : "#94a3b8",
+                  textDecoration: "none",
+                  fontSize: "0.9rem",
+                  fontWeight: 500,
+                  padding: "6px 12px",
+                  borderRadius: 8,
+                  transition: "color 0.25s",
+                }}
+                onMouseEnter={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.color = "#cbd5e1"; }}
+                onMouseLeave={(e) => { if (!isActive) (e.currentTarget as HTMLElement).style.color = "#94a3b8"; }}
+              >
+                {isActive && (
+                  <motion.span
+                    layoutId="nav-pill"
+                    transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      borderRadius: 8,
+                      background: "rgba(0,212,255,0.1)",
+                      border: "1px solid rgba(0,212,255,0.25)",
+                      zIndex: -1,
+                    }}
+                  />
+                )}
+                {link.label}
+              </a>
+            );
+          })}
           <a
             href="https://github.com/arhamwebexpert"
             target="_blank"
